@@ -1,43 +1,42 @@
+from pathlib import Path
 import cv2
-import imutils
-from numpy.lib.twodim_base import eye
-import pyautogui
-from viewer.draw import BLUE, WHITE, draw_circle
+import click
+from recorder.experiment_recorder import DummyRecorder, ExperimentRecorder
+from viewer.draw import PreviewRenderer
 from viewer.gaze import EyeTracker, MouseTrackerDriver
-from viewer.heatmap import HeatmapPlotter
-from viewer.screen import HEIGHT, WIDTH, ScreenCapturer
+from viewer.screen import ScreenCapturer
 
 
-def run_viewer(tracker_driver, preview_width=-1, gaze_radius=10, window_name='Screen'):
-    scale = 1
-    if preview_width > 0:
-        scale = preview_width / WIDTH
-    preview_width = int(WIDTH * scale)
-    preview_height = int(scale * HEIGHT)
+DEFAULT_EXP_DIR = Path(__file__).parent / 'data'
 
-    plotter = HeatmapPlotter(gaze_radius, (preview_width, preview_height))
-    with ScreenCapturer() as capturer, EyeTracker(tracker_driver) as eye_tracker:
+
+@click.command()
+@click.option('--id', prompt='ID do participante', help='Identificador único do participante')
+@click.option('--projeto', prompt='ID do projeto', help='Identificador único do projeto')
+@click.option('--experiment_dir', default=DEFAULT_EXP_DIR, help='Diretório de dados do experimento')
+@click.option('--mouse', is_flag=True, help='Usar mouse')
+@click.option('--record/--norecord', default=True, help='Não gravar experimento')
+@click.option('--preview_width', default=1024, help='Largura da imagem de preview')
+@click.option('--gaze_radius', default=30, help='Raio do indicador do olhar')
+@click.option('--window_name', default='Gaze', help='Título da janela')
+def run_viewer(id, projeto, experiment_dir, mouse, record, preview_width, gaze_radius, window_name):
+    capturer = ScreenCapturer()
+    eye_tracker = EyeTracker(MouseTrackerDriver())
+    if record:
+        recorder = ExperimentRecorder(id, projeto, experiment_dir, capturer, eye_tracker)
+    else:
+        recorder = DummyRecorder()
+    with capturer, eye_tracker, recorder:
+        renderer = PreviewRenderer(capturer, eye_tracker, preview_width, gaze_radius)
         while cv2.waitKey(1) != ord('q'):
             if capturer.screen is None:
                 continue
 
-            if preview_width > 0:
-                screen = imutils.resize(capturer.screen, preview_width)
-            else:
-                screen = capturer.screen
+            preview = renderer.draw_preview()
+            recorder.on_mouse(capturer.mouse_position())
 
-            draw_circle(screen, pyautogui.position(), BLUE, 5, radius_delta=1, scale=scale)
-
-            if eye_tracker.data:
-                curr_gaze = eye_tracker.data[-1]
-                draw_circle(screen, curr_gaze, WHITE, 10, radius_delta=2, scale=scale)
-
-                while plotter.total_samples < len(eye_tracker.data):
-                    plotter.add_sample(eye_tracker.data[plotter.total_samples], scale=scale)
-                screen = plotter.plot(screen)
-
-            cv2.imshow(window_name, screen)
+            cv2.imshow(window_name, preview)
 
 
 if __name__ == '__main__':
-    run_viewer(MouseTrackerDriver(), 1024, 30)
+    run_viewer()

@@ -1,23 +1,44 @@
+from collections import namedtuple
 from threading import Thread
 import time
 import pyautogui
 
 
+GazeData = namedtuple('GazeData', 'x, y, tstamp')
+
+
 class EyeTracker:
     def __init__(self, tracker_driver):
         self.data = []
-        self.running = False
-        self.gaze_thread = None
+        self.listeners = []
         self.driver = tracker_driver
+        self.driver.tracker = self
 
     def __enter__(self):
-        self.start()
+        self.driver.start()
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.stop()
+        self.driver.stop()
+
+    def add_listener(self, listener):
+        self.listeners.append(listener)
+
+    def add_sample(self, sample):
+        self.data.append(sample)
+        for listener in self.listeners:
+            listener.on_gaze(sample)
+
+
+class MouseTrackerDriver:
+    def __init__(self, delay=0.02):
+        self.running = False
+        self.gaze_thread = None
+        self.tracker = None
+        self.delay = delay
 
     def start(self):
+        assert self.tracker is not None, 'Eye tracker not set'
         if self.running or self.gaze_thread:
             raise RuntimeError("Eye tracker thread started more than once")
 
@@ -33,15 +54,9 @@ class EyeTracker:
 
     def run(self):
         while self.running:
-            time.sleep(0.02)
-            new_data = self.driver.pop_data()
-            if new_data:
-                self.data += new_data
-
-
-class MouseTrackerDriver:
-    def pop_data(self):
-        return [pyautogui.position()]
+            time.sleep(self.delay)
+            x, y = pyautogui.position()
+            self.tracker.add_sample(GazeData(x, y, time.time()))
 
 
 if __name__ == '__main__':

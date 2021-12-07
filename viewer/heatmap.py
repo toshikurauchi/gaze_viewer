@@ -16,7 +16,8 @@ def make_gaussian_map(radius):
     dst_sq = x**2 + y**2
     denom = 2 * sigma**2
 
-    return np.exp(-dst_sq / denom)
+    gaussian = np.exp(-dst_sq / denom)
+    return gaussian**0.5
 
 
 def clip_start_end(full_start, full_end, partial_max, full_max):
@@ -58,7 +59,7 @@ def add_map(full_map, partial, center):
 
 class HeatmapPlotter:
     # Each gaze point will create a gaussian with sigma = radius/3
-    def __init__(self, radius, size):
+    def __init__(self, radius, size, live=True):
         self.size = size
         self.heatmap = np.zeros((size[1], size[0]), np.float32)
 
@@ -66,19 +67,25 @@ class HeatmapPlotter:
         self.new_gaze_map = make_gaussian_map(radius)
         self.total_samples = 0
 
-    def add_sample(self, sample, scale):
-        self.heatmap *= self.total_samples / (self.total_samples + 1)
+        self.decay = 1
+        if live:
+            self.decay = 0.99
+
+    def add_sample(self, sample, scale=1):
+        # Decay 1% for each new sample (makes old samples disappear with time)
+        self.heatmap *= self.total_samples / (self.total_samples + 1) * self.decay
         self.total_samples += 1
 
-        x, y = sample
+        x, y, _ = sample
         sample = (int(x * scale), int(y * scale))
         self.heatmap = add_map(self.heatmap, self.new_gaze_map / self.total_samples, sample)
 
     def plot(self, img):
         heatmap = self.heatmap / self.heatmap.max() * 255
-        mask = heatmap > 1e-2
+        mask = self.heatmap**0.5
+        mask = mask / mask.max()
         mask = np.dstack((mask, mask, mask))
-        heatmap = cv2.applyColorMap(heatmap.astype(np.uint8), cv2.COLORMAP_JET).astype(np.float32) * mask
+        heatmap = cv2.applyColorMap(heatmap.astype(np.uint8), cv2.COLORMAP_TURBO).astype(np.float32) * mask
         return np.clip(img + heatmap, 0, 255).astype(img.dtype)
 
 

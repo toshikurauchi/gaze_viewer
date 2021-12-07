@@ -15,9 +15,10 @@ SCALE = PREVIEW_WIDTH / WIDTH
 
 class ScreenCapturer:
     def __init__(self):
-        self.screen = None
+        self._screen = None
         self.running = False
         self.capture_thread = None
+        self.listeners = []
 
     def __enter__(self):
         self.start()
@@ -47,6 +48,23 @@ class ScreenCapturer:
                 screen = np.array(sct.grab(monitor))
                 screen = cv2.cvtColor(screen, cv2.COLOR_BGRA2BGR)
                 self.screen = screen
+
+    def mouse_position(self):
+        return pyautogui.position()
+
+    @property
+    def screen(self):
+        return self._screen
+
+    @screen.setter
+    def screen(self, new_screen):
+        if not np.array_equal(self._screen, new_screen):
+            for listener in self.listeners:
+                listener.on_screen(new_screen)
+        self._screen = new_screen
+
+    def add_listener(self, listener):
+        self.listeners.append(listener)
 
 
 if __name__ == '__main__':
