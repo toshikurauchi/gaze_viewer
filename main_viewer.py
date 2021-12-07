@@ -1,6 +1,7 @@
 from pathlib import Path
 import csv
 import click
+from player.player import VideoPlayer
 from recorder.experiment_recorder import GAZE_FILENAME, MOUSE_FILENAME, SCREEN_FILENAME, SCREEN_TSTAMPS_FILENAME
 import cv2
 from viewer.draw import BLUE, draw_circle
@@ -57,26 +58,26 @@ def view_data(recording):
 
     if not screen_data:
         return
-    height, width = screen_data[0]['frame'].shape[:2]
-    plotter = HeatmapPlotter(100, (width, height), False)
-    frame = None
-    mouse = None
-    for d in data:
-        dtype = d['dtype']
-        if dtype == SCREEN_TYPE:
-            frame = d['frame']
-        if dtype == GAZE_TYPE:
-            plotter.add_sample(GazeData(d['x'], d['y'], d['tstamp']))
-        if dtype == MOUSE_TYPE:
-            mouse = d['x'], d['y']
-        if frame is not None:
-            curr_frame = frame.copy()
-            curr_frame = plotter.plot(curr_frame)
-            if mouse:
-                draw_circle(curr_frame, mouse, BLUE, 50, radius_delta=10)
-            cv2.imshow('Gaze', curr_frame)
-            if cv2.waitKey(1) == ord('q'):
-                break
+    # height, width = screen_data[0]['frame'].shape[:2]
+    # plotter = HeatmapPlotter(100, (width, height), False)
+    # frame = None
+    # mouse = None
+    # for d in data:
+    #     dtype = d['dtype']
+    #     if dtype == SCREEN_TYPE:
+    #         frame = d
+    #     if dtype == GAZE_TYPE:
+    #         plotter.add_sample(GazeData(d['x'], d['y'], d['tstamp']))
+    #     if dtype == MOUSE_TYPE:
+    #         mouse = d['x'], d['y']
+    #     if frame is not None:
+    #         curr_frame = frame['frame'].copy()
+    #         curr_frame = plotter.plot(curr_frame)
+    #         if mouse:
+    #             draw_circle(curr_frame, mouse, BLUE, 50, radius_delta=10)
+    #         frame['overlayed'] = curr_frame
+
+    VideoPlayer().play([f['frame'] for f in screen_data])
 
 
 if __name__ == '__main__':

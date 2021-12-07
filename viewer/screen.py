@@ -58,9 +58,8 @@ class ScreenCapturer:
 
     @screen.setter
     def screen(self, new_screen):
-        if not np.array_equal(self._screen, new_screen):
-            for listener in self.listeners:
-                listener.on_screen(new_screen)
+        for listener in self.listeners:
+            listener.on_screen(new_screen)
         self._screen = new_screen
 
     def add_listener(self, listener):
