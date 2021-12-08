@@ -9,6 +9,7 @@ GAZE_FILENAME = 'gaze.csv'
 MOUSE_FILENAME = 'mouse.csv'
 SCREEN_FILENAME = 'screen.avi'
 SCREEN_TSTAMPS_FILENAME = 'screen.csv'
+OVERLAYED_FILENAME = 'overlayed.avi'
 
 
 class CSVWriter:
@@ -30,9 +31,9 @@ class CSVWriter:
 
 
 class VideoWriter:
-    def __init__(self, filename, width, height):
+    def __init__(self, filename, width, height, fps=30.0):
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        self.out = cv2.VideoWriter(str(filename), fourcc, 30.0, (width, height))
+        self.out = cv2.VideoWriter(str(filename), fourcc, fps, (width, height))
 
     def close(self):
         self.out.release()

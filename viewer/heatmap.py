@@ -4,7 +4,7 @@ import cv2
 
 def make_gaussian_map(radius):
     sigma = radius / 3
-    size = int(radius * 3)
+    size = int(radius * 6)
     if size % 2 == 0:  # Will force odd so it has a central pixel
         size += 1
     center = size // 2
@@ -83,10 +83,10 @@ class HeatmapPlotter:
     def plot(self, img):
         heatmap = self.heatmap / self.heatmap.max() * 255
         mask = self.heatmap**0.5
-        mask = mask / mask.max()
+        mask = mask / mask.max() * 0.9
         mask = np.dstack((mask, mask, mask))
-        heatmap = cv2.applyColorMap(heatmap.astype(np.uint8), cv2.COLORMAP_TURBO).astype(np.float32) * mask
-        return np.clip(img + heatmap, 0, 255).astype(img.dtype)
+        heatmap = cv2.applyColorMap(heatmap.astype(np.uint8), cv2.COLORMAP_TURBO).astype(np.float32)
+        return np.clip(img * (1 - mask) + heatmap * mask, 0, 255).astype(img.dtype)
 
 
 if __name__ == '__main__':
