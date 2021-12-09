@@ -3,7 +3,11 @@ import time
 from pathlib import Path
 import csv
 import cv2
+import imutils
+import pyautogui
 
+
+WIDTH, HEIGHT = pyautogui.size()
 
 GAZE_FILENAME = 'gaze.csv'
 MOUSE_FILENAME = 'mouse.csv'
@@ -62,6 +66,8 @@ class ExperimentRecorder:
         self.eye_tracker = eye_tracker
         self.eye_tracker.add_listener(self)
 
+        self.last_mouse = None
+
     def __enter__(self):
         self.start()
         return self
@@ -86,9 +92,11 @@ class ExperimentRecorder:
         self.gaze_file.writerow([sample.tstamp - self.t0, sample.x, sample.y])
 
     def on_mouse(self, position):
-        self.mouse_file.writerow([self.now(), *position])
+        if position != self.last_mouse:
+            self.mouse_file.writerow([self.now(), *position])
 
     def on_screen(self, screen):
+        screen = imutils.resize(screen, WIDTH, HEIGHT)
         height, width = screen.shape[:2]
         if not self.screen_file:
             self.screen_file = VideoWriter(self.trial_path / SCREEN_FILENAME, width, height)

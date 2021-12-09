@@ -3,7 +3,7 @@ import cv2
 import click
 from recorder.experiment_recorder import DummyRecorder, ExperimentRecorder
 from viewer.draw import PreviewRenderer
-from viewer.gaze import EyeTracker, MouseTrackerDriver
+from viewer.gaze import EyeTracker, MouseTrackerDriver, TobiiTrackerDriver
 from viewer.screen import ScreenCapturer
 
 
@@ -21,7 +21,11 @@ DEFAULT_EXP_DIR = Path(__file__).parent / 'data'
 @click.option('--window_name', default='Gaze', help='Título da janela')
 def run_viewer(id, projeto, experiment_dir, mouse, record, preview_width, gaze_radius, window_name):
     capturer = ScreenCapturer()
-    eye_tracker = EyeTracker(MouseTrackerDriver())
+    if mouse:
+        driver = MouseTrackerDriver()
+    else:
+        driver = TobiiTrackerDriver()
+    eye_tracker = EyeTracker(driver)
     if record:
         recorder = ExperimentRecorder(id, projeto, experiment_dir, capturer, eye_tracker)
     else:

@@ -5,4 +5,5 @@ opencv-python
 Pillow
 pyautogui
 click
+tobii_research
 tqdm

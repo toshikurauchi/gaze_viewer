@@ -59,7 +59,7 @@ def add_map(full_map, partial, center):
 
 class HeatmapPlotter:
     # Each gaze point will create a gaussian with sigma = radius/3
-    def __init__(self, radius, size, live=True):
+    def __init__(self, radius, size):
         self.size = size
         self.heatmap = np.zeros((size[1], size[0]), np.float32)
 
@@ -67,9 +67,7 @@ class HeatmapPlotter:
         self.new_gaze_map = make_gaussian_map(radius)
         self.total_samples = 0
 
-        self.decay = 1
-        if live:
-            self.decay = 0.99
+        self.decay = 0.9
 
     def add_sample(self, sample, scale=1):
         # Decay 1% for each new sample (makes old samples disappear with time)
@@ -81,7 +79,10 @@ class HeatmapPlotter:
         self.heatmap = add_map(self.heatmap, self.new_gaze_map / self.total_samples, sample)
 
     def plot(self, img):
-        heatmap = self.heatmap / self.heatmap.max() * 255
+        max_val = self.heatmap.max()
+        if max_val < 1e-5:
+            return img
+        heatmap = self.heatmap / max_val * 255
         mask = self.heatmap**0.5
         mask = mask / mask.max() * 0.9
         mask = np.dstack((mask, mask, mask))
