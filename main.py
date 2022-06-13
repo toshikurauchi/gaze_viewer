@@ -32,6 +32,7 @@ def run_viewer(id, projeto, experiment_dir, mouse, record, preview_width, gaze_r
         recorder = DummyRecorder()
     with capturer, eye_tracker, recorder:
         renderer = PreviewRenderer(capturer, eye_tracker, preview_width, gaze_radius)
+        print('To quit, change the focus to the visualization window and press "q"')
         while cv2.waitKey(1) != ord('q'):
             if capturer.screen is None:
                 continue
