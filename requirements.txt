@@ -7,3 +7,4 @@ pyautogui
 click
 tobii_research
 tqdm
+selenium
