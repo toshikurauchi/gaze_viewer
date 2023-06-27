@@ -66,6 +66,20 @@ class ScreenCapturer:
         self.listeners.append(listener)
 
 
+class StaticImageCapturer:
+    def __init__(self, image):
+        self.screen = image
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        pass
+
+    def mouse_position(self):
+        return pyautogui.position()
+
+
 if __name__ == '__main__':
     with ScreenCapturer() as capturer:
         while cv2.waitKey(1) != ord('q'):

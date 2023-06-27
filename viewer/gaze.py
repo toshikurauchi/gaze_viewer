@@ -1,8 +1,12 @@
 from collections import namedtuple
+import sys
 from threading import Thread
 import time
 import pyautogui
-import tobii_research as tr
+try:
+    import tobii_research as tr
+except ImportError:
+    tr = None
 
 
 WIDTH, HEIGHT = pyautogui.size()
@@ -67,6 +71,8 @@ class TobiiTrackerDriver:
         self.instance = None
 
     def start(self):
+        if tr is None:
+            raise RuntimeError('tobii_research is not installed')
         eyetrackers = tr.find_all_eyetrackers()
         assert len(
             eyetrackers
@@ -84,7 +90,7 @@ class TobiiTrackerDriver:
         lx, ly = gaze_data['left_gaze_point_on_display_area']
         r_valid = gaze_data['right_gaze_point_validity']
         l_valid = gaze_data['left_gaze_point_validity']
-        
+
         total = r_valid + l_valid
         if not total:
             return
@@ -92,7 +98,7 @@ class TobiiTrackerDriver:
             rx, ry = 0, 0
         if not l_valid:
             lx, ly = 0, 0
-        
+
         x = (rx * r_valid + lx * l_valid) / total * WIDTH
         y = (ry * r_valid + ly * l_valid) / total * HEIGHT
         self.tracker.add_sample(GazeData(x, y, time.time()))

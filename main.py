@@ -1,10 +1,11 @@
+from email.policy import default
 from pathlib import Path
 import cv2
 import click
 from recorder.experiment_recorder import DummyRecorder, ExperimentRecorder
 from viewer.draw import PreviewRenderer
 from viewer.gaze import EyeTracker, MouseTrackerDriver, TobiiTrackerDriver
-from viewer.screen import ScreenCapturer
+from viewer.screen import ScreenCapturer, StaticImageCapturer
 
 
 DEFAULT_EXP_DIR = Path(__file__).parent / 'data'
@@ -19,8 +20,12 @@ DEFAULT_EXP_DIR = Path(__file__).parent / 'data'
 @click.option('--preview_width', default=1024, help='Largura da imagem de preview')
 @click.option('--gaze_radius', default=30, help='Raio do indicador do olhar')
 @click.option('--window_name', default='Gaze', help='Título da janela')
-def run_viewer(id, projeto, experiment_dir, mouse, record, preview_width, gaze_radius, window_name):
-    capturer = ScreenCapturer()
+@click.option('--target', default=None, help='Imagem alvo (deixe em branco para capturar a tela)')
+def run_viewer(id, projeto, experiment_dir, mouse, record, preview_width, gaze_radius, window_name, target):
+    if target:
+        capturer = StaticImageCapturer(target)
+    else:
+        capturer = ScreenCapturer()
     if mouse:
         driver = MouseTrackerDriver()
     else:
